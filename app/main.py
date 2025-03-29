@@ -13,4 +13,4 @@ async def root():
 @app.post("/query")
 async def query(query: Query):
     # Placeholder for RAG implementation
-    return {"response": f"Received querys: {query.text}"}
+    return {"response": f"Received querys a: {query.text}"}
