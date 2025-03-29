@@ -8,7 +8,7 @@ class Query(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to RAG API"}
+    return {"message": "Welcome to RAG API."}
 
 @app.post("/query")
 async def query(query: Query):
