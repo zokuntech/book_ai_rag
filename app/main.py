@@ -1,16 +1,17 @@
+# Typical FastAPI main.py
+import uvicorn
 from fastapi import FastAPI
-from pydantic import BaseModel
 
-app = FastAPI(title="RAG API")
-
-class Query(BaseModel):
-    text: str
+app = FastAPI()
 
 @app.get("/")
-async def root():
-    return {"message": "Welcome to RAG APII."}
+def read_root():
+    return {"Hello": "World"}
 
-@app.post("/query")
-async def query(query: Query):
-    # Placeholder for RAG implementation
-    return {"response": f"Received querys a: {query.text}"}
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
+
+if __name__ == "__main__":
+    # This is crucial - must listen on 0.0.0.0, not localhost/127.0.0.1
+    uvicorn.run(app, host="0.0.0.0", port=8000)
