@@ -4,21 +4,26 @@ phases:
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REPOSITORY_URI
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REPOSITORY_URI || (echo "Failed to log in to ECR" && exit 1)
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
-      - echo Build started on `date`
+      - echo "ECR Repository URI: $ECR_REPOSITORY_URI"
+      - echo "AWS Region: $AWS_DEFAULT_REGION"
+      - echo "Image tag: $IMAGE_TAG"
   
   build:
     commands:
       - echo Building the Docker image...
-      - docker build -t $ECR_REPOSITORY_URI:$IMAGE_TAG .
-      - docker tag $ECR_REPOSITORY_URI:$IMAGE_TAG $ECR_REPOSITORY_URI:latest
+      - docker build -t $ECR_REPOSITORY_URI:$IMAGE_TAG . || (echo "Docker build failed" && exit 1)
+      - docker tag $ECR_REPOSITORY_URI:$IMAGE_TAG $ECR_REPOSITORY_URI:latest || (echo "Docker tag failed" && exit 1)
   
   post_build:
     commands:
       - echo Pushing the Docker images...
-      - docker push $ECR_REPOSITORY_URI:$IMAGE_TAG
-      - docker push $ECR_REPOSITORY_URI:latest
+      - docker images
+      - echo "Pushing image with tag: $IMAGE_TAG"
+      - docker push $ECR_REPOSITORY_URI:$IMAGE_TAG || (echo "Failed to push image with tag $IMAGE_TAG" && exit 1)
+      - echo "Pushing image with tag: latest"
+      - docker push $ECR_REPOSITORY_URI:latest || (echo "Failed to push image with latest tag" && exit 1)
       - echo Updating ECS service...
-      - aws ecs update-service --cluster $ECS_CLUSTER_NAME --service $ECS_SERVICE_NAME --force-new-deployment
+      - aws ecs update-service --cluster $ECS_CLUSTER_NAME --service $ECS_SERVICE_NAME --force-new-deployment || (echo "Failed to update ECS service" && exit 1)
