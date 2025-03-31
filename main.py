@@ -1,17 +1,26 @@
-# Typical FastAPI main.py
-import uvicorn
-from fastapi import FastAPI
+# In your FastAPI app's main.py
+import logging
+from fastapi import FastAPI, Request
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"Incoming request: {request.method} {request.url.path}")
+    response = await call_next(request)
+    logger.info(f"Outgoing response: Status {response.status_code}")
+    return response
+
 @app.get("/")
-def read_root():
-    return {"Hello": "World"}
+def root():
+    logger.info("Root endpoint called")
+    return {"status": "ok"}
 
 @app.get("/health")
-def health_check():
+def health():
+    logger.info("Health check endpoint called")
     return {"status": "healthy"}
-
-if __name__ == "__main__":
-    # This is crucial - must listen on 0.0.0.0, not localhost/127.0.0.1
-    uvicorn.run(app, host="0.0.0.0", port=8000)
