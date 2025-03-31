@@ -3,23 +3,21 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - echo Logging in to Amazon ECR...
+      - echo Logging in to Amazon ECR
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REPOSITORY_URI
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
-      - echo "ECR Repository URI: $ECR_REPOSITORY_URI"
   
   build:
     commands:
-      - echo Building the Docker image...
+      - echo Building the Docker image
       - docker build -t $ECR_REPOSITORY_URI:$IMAGE_TAG .
       - docker tag $ECR_REPOSITORY_URI:$IMAGE_TAG $ECR_REPOSITORY_URI:latest
   
   post_build:
     commands:
-      - echo Pushing the Docker images...
-      - docker images
+      - echo Pushing the Docker images
       - docker push $ECR_REPOSITORY_URI:$IMAGE_TAG
       - docker push $ECR_REPOSITORY_URI:latest
-      - echo Updating ECS service...
+      - echo Updating ECS service
       - aws ecs update-service --cluster $ECS_CLUSTER_NAME --service $ECS_SERVICE_NAME --force-new-deployment
